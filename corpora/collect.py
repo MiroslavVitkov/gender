@@ -43,10 +43,13 @@ def stream_all_tweets():
                           ACCESS_TOKEN,
                           ACCESS_TOKEN_SECRET)
 
+    # https://developer.twitter.com/en/docs/tweets/sample-realtime/api-reference/get-statuses-sample
     response = client.stream.statuses.sample.get()
     for data in response.stream():
         try:
-            print(data.user.name)
+            u = data.user
+            print(dir(u)); return
+            print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
         except:
             pass
 
