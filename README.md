@@ -2,6 +2,7 @@
 Guess the gender of the author of a short text. 
 
 1. Corpora
+
 1.1. `Corpus T` - a corpus of recent tweets.
 1.1.1 Test access rights to Twitter's API via 'twirl'.
 1.1.2 Select a library to consume the API.

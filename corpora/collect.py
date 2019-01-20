@@ -54,5 +54,21 @@ def stream_all_tweets():
             pass
 
 
+def read_names(male='male', female='female'):
+    def to_list(fname):
+        with open(fname) as f:
+            l = f.readlines()
+            l = [x.strip() for x in l]
+            return l
+
+    m = to_list(male)
+    f = to_list(female)
+
+    assert len(list(set(m).intersection(f))) == 0
+    assert len(m) == len(f)
+
+    return m, f
+
+
 if __name__ == '__main__':
-    stream_all_tweets()
+    create_names_table()
