@@ -21,3 +21,4 @@ With some scraping, a more comprehensive list of about 10 000 names can be compi
 
 1.1.3.2 Remove any ambiguities and ensure the final lists are the same lenghth.
 
+1.1.4 Accumulate tweets in English, whose author has a descernable first and last name.

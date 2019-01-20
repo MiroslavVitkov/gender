@@ -8,6 +8,8 @@ depends: https://github.com/inueni/birdy
 
 from birdy.twitter import UserClient, StreamClient
 
+import string
+
 
 CONSUMER_KEY = 'mS4tzhkekNhpQXuJGAv2MwWWL'
 CONSUMER_SECRET = 'NReza0C8h52nD7Bj9vsrPqUwW1xPOYIh4acBONoSLYaGVHVvSc'
@@ -26,13 +28,13 @@ def querry_user():
     print(response.data)
 
 
-def stream_tweets():
+def stream_tweets_by(user='foxnews'):
     client = StreamClient(CONSUMER_KEY,
                           CONSUMER_SECRET,
                           ACCESS_TOKEN,
                           ACCESS_TOKEN_SECRET)
 
-    response = client.stream.statuses.filter.post(track='foxnews')
+    response = client.stream.statuses.filter.post(track=user)
     for data in response.stream():
         print(data)
 
@@ -45,11 +47,12 @@ def stream_all_tweets():
 
     # https://developer.twitter.com/en/docs/tweets/sample-realtime/api-reference/get-statuses-sample
     response = client.stream.statuses.sample.get()
-    for data in response.stream():
+    for tweet in response.stream():
+        # For some reason, many tweets are not tagged with a user!
         try:
-            u = data.user
-            print(dir(u)); return
-            print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
+            u = tweet.user
+            #print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
+            yield tweet, u
         except:
             pass
 
@@ -70,5 +73,28 @@ def read_names(male='male', female='female'):
     return m, f
 
 
+def is_proper_name(str):
+    for word in str.split():
+        if not word.isalpha():
+            return False
+        if word[0] not in string.ascii_uppercase:
+            return False
+    return True
+
+
+def get_given_name(namestring):
+    try:
+        for word in namestring.split():
+            assert word.isalpha()
+            assert word[0] in string.ascii_uppercase
+        return namestring.split()[0]
+    except:
+        return None
+
 if __name__ == '__main__':
-    create_names_table()
+    m, f = read_names()
+    for t, u in stream_all_tweets():
+        if u.lang == 'en':
+            if get_given_name(u.name):
+                if u.name.split()[0] in m:
+                    print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
