@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 """
 Collect tweets from Tweeter.
+
+depends: https://github.com/inueni/birdy
 """
 
 
@@ -20,6 +22,7 @@ def querry_user():
                         ACCESS_TOKEN_SECRET)
 
     response = client.api.users.show.get(screen_name='twitter')
+    # resource = client.userstream.user.get()
     print(response.data)
 
 
@@ -34,5 +37,19 @@ def stream_tweets():
         print(data)
 
 
+def stream_all_tweets():
+    client = StreamClient(CONSUMER_KEY,
+                          CONSUMER_SECRET,
+                          ACCESS_TOKEN,
+                          ACCESS_TOKEN_SECRET)
+
+    response = client.stream.statuses.sample.get()
+    for data in response.stream():
+        try:
+            print(data.user.name)
+        except:
+            pass
+
+
 if __name__ == '__main__':
-    stream_tweets()
+    stream_all_tweets()
