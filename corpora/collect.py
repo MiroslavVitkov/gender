@@ -35,12 +35,12 @@ def read_names(male='./male', female='./female'):
     return m, f
 
 
-def get_given_name(screen_name):
+def get_given_name(names):
     try:
-        for word in screen_name.split():
-            assert word.isalpha()
-            assert word[0] in string.ascii_uppercase
-        return namestring.split()[0]
+        for n in names.split():
+            assert n.isalpha()
+            assert n[0] in string.ascii_uppercase
+        return names.split()[0]
     except:
         return None
 
@@ -74,18 +74,24 @@ def get_user_timeline(screen_name='MiroslavVitkov'):
     return response.data
 
 
-def kur():
+def collect_corpus():
     m, f = read_names()
 
-    for t, u in stream_tweets():
-        if u.lang == 'en':
-            if get_given_name(u.name) in m:
-                    print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
+    def is_en(user):
+        return user.lang == 'en'
 
+    def is_known(user):
+        n = get_given_name(user.name)
+        if n in m or n in f:
+            return True
+        else:
+            return False
+
+    for t, u in stream_tweets():
+        if is_en(u) and is_known(u):
+            print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
+#    tweets = get_user_timeline()
 
 
 if __name__ == '__main__':
-    tweets = get_user_timeline()
-    print(tweets)
-    #kur()
-#    stream_tweets_by2()
+    collect_corpus()
