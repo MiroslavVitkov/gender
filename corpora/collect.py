@@ -45,6 +45,15 @@ def get_given_name(names):
         return None
 
 
+def get_family_name(names):
+    try:
+        assert get_given_name(names) is not None
+        assert len(names) > 1
+        return names.split()[-1]
+    except:
+        return None
+
+
 def stream_tweets():
     """Twitter's sampling algorithm outputs about 5 000 000 tweets per 24 hours."""
     client = StreamClient(CONSUMER_KEY,
@@ -74,7 +83,8 @@ def get_user_timeline(screen_name='MiroslavVitkov'):
     return response.data
 
 
-def collect_corpus():
+def select_users():
+    """Determine eligible twitter users to take part in the survey."""
     m, f = read_names()
 
     def is_en(user):
@@ -87,10 +97,27 @@ def collect_corpus():
         else:
             return False
 
+    def has_tweets(user, min=10):
+        tweets = get_user_timeline(user.screen_name)
+        return len(tweets) >= min
+
+    def starts_with(user):
+        """Try to exclude people, posing as the opposite gender."""
+        try:
+            return True
+            assert (user.name[0] == get_given_name(user.name)[0] or
+                    user.name[0] == get_family_name(user.name)[0])
+            return True
+        except:
+            return False
+
     for t, u in stream_tweets():
-        if is_en(u) and is_known(u):
+        if is_en(u) and is_known(u) and has_tweets(u) and starts_with(u):
             print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
-#    tweets = get_user_timeline()
+
+
+def collect_corpus():
+    select_users()
 
 
 if __name__ == '__main__':
