@@ -83,7 +83,7 @@ def get_user_timeline(screen_name='MiroslavVitkov'):
     return response.data
 
 
-def select_users():
+def collect_users():
     """Determine eligible twitter users to take part in the survey."""
     m, f = read_names()
 
@@ -113,11 +113,18 @@ def select_users():
 
     for t, u in stream_tweets():
         if is_en(u) and is_known(u) and has_tweets(u) and starts_with(u):
-            print('name: ', u.name, ', scrn: ', u.screen_name, ', lang: ', u.lang)
+            print(u.name)
+            yield u
 
 
 def collect_corpus():
-    select_users()
+    with open('corpus', 'w') as f:
+
+        for user in collect_users():
+            f.write('user = ' + user.name + ',\n')
+
+            for tweet in get_user_timeline(user.screen_name):
+                f.write('text = ' + tweet.text + ',\n')
 
 
 if __name__ == '__main__':
