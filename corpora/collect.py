@@ -92,7 +92,9 @@ def collect_users():
 
     def is_known(user):
         n = get_given_name(user.name)
-        _ = get_family_name(user.name)
+        if get_family_name(user.name) is None:
+            return False
+
         if n in m or n in f:
             return True
         else:
@@ -111,9 +113,12 @@ def collect_users():
         except:
             return False
 
+    def is_verified(user):
+        return user.verified
+
     for t, u in stream_tweets():
-        if is_en(u) and is_known(u) and has_tweets(u) and starts_with(u):
-            print(u.name)
+        if is_en(u) and is_known(u) and has_tweets(u) and is_verified(u):
+            print(u.name, ', ', u.screen_name, ', ', u.description)
             yield u
 
 
