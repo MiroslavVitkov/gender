@@ -168,7 +168,12 @@ def collect_users(opts):
 def collect_corpus(opts):
     with open(opts.output, 'w') as f:
 
+        users = []
         for user in collect_users(opts):
+            if user in users:
+                continue
+            users.append(user)
+
             f.write('user = ' + user.name + ',\n')
 
             timeline = get_user_timeline(user.screen_name)
