@@ -71,7 +71,7 @@ def stream_tweets():
             pass
 
 
-def get_user_timeline(screen_name='MiroslavVitkov'):
+def get_user_timeline(screen_name='MiroslavVitkov', count=200):
     """Reads the last 3200 tweets by a user."""
     client = UserClient(CONSUMER_KEY,
                         CONSUMER_SECRET,
@@ -79,13 +79,47 @@ def get_user_timeline(screen_name='MiroslavVitkov'):
                         ACCESS_TOKEN_SECRET)
 
     # https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline.html
-    response = client.api.statuses.user_timeline.get(screen_name=screen_name)
+    while True:
+        response = None
+        try:
+            response = client.api.statuses.user_timeline.get(screen_name=screen_name, count=count)
+        except:
+            print('Temporary connection problems.')
+        if response is not None:
+            break
+
     return response.data
 
 
-def collect_users():
+class Opts:
+    DEFAULT=0
+    EMPTY=1
+    def __init__(me, type):
+        me.female_names='./female'
+        me.male_names='./male'
+        me.output='./corpus'
+
+        if type == me.DEFAULT:
+            me.is_en = True
+            me.is_known = True
+            me.min_tweets = 10
+            me.starts_with= False
+            me.is_verified = True
+
+        elif type == me.EMPTY:
+            me.is_en = False
+            me.is_known = False
+            me.min_tweets = 0
+            me.starts_with= False
+            me.is_verified = False
+
+        else:
+            assert(False)
+
+
+def collect_users(opts):
     """Determine eligible twitter users to take part in the survey."""
-    m, f = read_names()
+    m, f = read_names(opts.male_names, opts.female_names)
 
     def is_en(user):
         return user.lang == 'en'
@@ -100,8 +134,8 @@ def collect_users():
         else:
             return False
 
-    def has_tweets(user, min=10):
-        tweets = get_user_timeline(user.screen_name)
+    def min_tweets(user, min=10):
+        tweets = get_user_timeline(user.screen_name, count=min)
         return len(tweets) >= min
 
     def starts_with(user):
@@ -117,20 +151,37 @@ def collect_users():
         return user.verified
 
     for t, u in stream_tweets():
-        if is_en(u) and is_known(u) and has_tweets(u) and is_verified(u):
-            print(u.name, ', ', u.screen_name, ', ', u.description)
-            yield u
+        if opts.is_en and not is_en(u):
+            continue
+        if opts.is_known and not is_known(u):
+            continue
+        if opts.min_tweets and not min_tweets(u):
+            continue
+        if opts.starts_with and not starts_with(u):
+            continue
+        if opts.is_verified and not is_verified(u):
+            continue
+
+        yield u
 
 
-def collect_corpus():
-    with open('corpus', 'w') as f:
+def collect_corpus(opts):
+    with open(opts.output, 'w') as f:
 
-        for user in collect_users():
+        for user in collect_users(opts):
             f.write('user = ' + user.name + ',\n')
 
-            for tweet in get_user_timeline(user.screen_name):
+            timeline = get_user_timeline(user.screen_name)
+            count = 0
+            for tweet in timeline:
                 f.write('text = ' + tweet.text + ',\n')
+                count = count + 1
+
+            print('Wrоте', count, 'tweets by '
+                 ,user.name, ', ', user.screen_name, ', ', user.description
+                 , '\n')
 
 
 if __name__ == '__main__':
-    collect_corpus()
+    opts = Opts(Opts.DEFAULT)
+    collect_corpus(opts)
