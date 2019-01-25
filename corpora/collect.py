@@ -48,7 +48,7 @@ def get_given_name(names):
 def get_family_name(names):
     try:
         assert get_given_name(names) is not None
-        assert len(names) > 1
+        assert len(names.split()) > 1
         return names.split()[-1]
     except:
         return None
@@ -92,6 +92,7 @@ def collect_users():
 
     def is_known(user):
         n = get_given_name(user.name)
+        _ = get_family_name(user.name)
         if n in m or n in f:
             return True
         else:
@@ -104,7 +105,6 @@ def collect_users():
     def starts_with(user):
         """Try to exclude people, posing as the opposite gender."""
         try:
-            return True
             assert (user.name[0] == get_given_name(user.name)[0] or
                     user.name[0] == get_family_name(user.name)[0])
             return True
