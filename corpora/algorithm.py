@@ -6,7 +6,7 @@ dependency - available via pip: https://github.com/inueni/birdy
 """
 
 
-from birdy.twitter import UserClient, StreamClient
+from birdy.twitter import UserClient, StreamClient, BirdyException
 
 import string
 
@@ -56,23 +56,34 @@ def get_family_name(names):
 
 def stream_tweets():
     """Twitter's sampling algorithm outputs about 5 000 000 tweets per 24 hours."""
-    client = StreamClient(CONSUMER_KEY,
-                          CONSUMER_SECRET,
-                          ACCESS_TOKEN,
-                          ACCESS_TOKEN_SECRET)
+    class Stream:
+        def __init__(me):
+            me.client = StreamClient(CONSUMER_KEY
+                                    ,CONSUMER_SECRET
+                                    ,ACCESS_TOKEN
+                                    ,ACCESS_TOKEN_SECRET)
+            # https://developer.twitter.com/en/docs/tweets/sample-realtime/api-reference/get-statuses-sample
+            me.response = me.client.stream.statuses.sample.get()
 
-    # https://developer.twitter.com/en/docs/tweets/sample-realtime/api-reference/get-statuses-sample
-    response = client.stream.statuses.sample.get()
-    for tweet in response.stream():
-        # For some reason, many tweets are not tagged with a user!
+        def __call__(me):
+            for tweet in me.response.stream():
+            # For some reason, many tweets are not tagged with a user!
+                try:
+                    yield tweet, tweet.user
+                except:
+                    pass
+
+    while True:
         try:
-            yield tweet, tweet.user
-        except:
+            s = Stream()
+            for t, u in s():
+                yield t, u
+        except BirdyException:
             pass
 
 
 def get_user_timeline(screen_name='MiroslavVitkov', count=200):
-    """Reads the last 3200 tweets by a user."""
+    """Reads the last 3200 (theoretical, now 200) tweets by a user."""
     client = UserClient(CONSUMER_KEY,
                         CONSUMER_SECRET,
                         ACCESS_TOKEN,
@@ -115,6 +126,10 @@ class Opts:
 
         else:
             assert(False)
+
+    def __eq__(me, other):
+        return me.__dict__ == other.__dict__
+
 
 
 def collect_users(opts):
