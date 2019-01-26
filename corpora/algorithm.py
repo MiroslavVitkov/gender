@@ -78,7 +78,9 @@ def stream_tweets():
             s = Stream()
             for t, u in s():
                 yield t, u
-        except BirdyException:
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except:
             pass
 
 
@@ -94,7 +96,7 @@ def get_user_timeline(screen_name='MiroslavVitkov', count=200):
         response = None
         try:
             response = client.api.statuses.user_timeline.get(screen_name=screen_name, count=count)
-        except:
+        except BirdyException:
             print('Temporary connection problems.')
         if response is not None:
             break
