@@ -8,6 +8,7 @@ dependency - available via pip: https://github.com/inueni/birdy
 
 from birdy.twitter import UserClient, StreamClient, BirdyException
 
+from collections import deque
 import string
 
 
@@ -84,12 +85,125 @@ def stream_tweets():
             pass
 
 
-def get_user_timeline(screen_name='MiroslavVitkov', count=200):
-    """Reads the last 3200 (theoretical, now 200) tweets by a user."""
-    client = UserClient(CONSUMER_KEY,
-                        CONSUMER_SECRET,
-                        ACCESS_TOKEN,
-                        ACCESS_TOKEN_SECRET)
+
+class Queue:
+    def __init__(me):
+        me.q = deque()
+        me.size = 0
+
+
+    def push_left(me, val):
+        me.q.appendleft(val)
+        me.size = me.size + 1
+
+
+    def pop_right(me):
+        val = me.q.pop()
+        me.size = me.size - 1
+        return val
+
+
+    def peek_left(me):
+        val = me.q.popleft()
+        me.q.appendleft(val)
+        return val
+
+
+    def empty(me):
+        return me.size == 0
+
+
+class UserTimeline:
+    """Read up to 3200 most recent tweets per user."""
+
+
+    TWEETS_PER_FETCH = 50
+    UC = UserClient(CONSUMER_KEY
+                   ,CONSUMER_SECRET
+                   ,ACCESS_TOKEN
+                   ,ACCESS_TOKEN_SECRET)
+
+
+    def __init__(me, screen_name, client=UC):
+        me.screen_name = screen_name
+        me.queue = Queue()
+        me.client = client
+        me.request = me.client.api.statuses.user_timeline.get
+
+        response = me.request(screen_name=me.screen_name
+                             ,count=me.TWEETS_PER_FETCH)
+        for tweet in response.data:
+            me.queue.push_left(tweet)
+
+
+    def __iter__(me):
+        return me
+
+
+    def __next__(me):
+        if me.queue.size == 1:
+            me._fetch_more()
+
+        if me.queue.empty():
+            raise StopIteration
+
+        return me.queue.pop_right()
+
+
+    def _fetch_more(me):
+        tweet = me.queue.peek_left()
+        last_id=tweet.id
+
+        response = me.request(screen_name=me.screen_name
+                             ,count=me.TWEETS_PER_FETCH
+                             ,max_id=last_id-1)
+
+        for tweet in response.data:
+            me.queue.push_left(tweet)
+
+
+    """
+    def get_user_timeline(screen_name, count=200):
+
+    Reads up to 3200 tweets per user.
+    class Stream:
+        def __init__(me, screen_name):
+            me.client = UserClient(CONSUMER_KEY
+                                  , CONSUMER_SECRET
+                                  , ACCESS_TOKEN
+                                  , ACCESS_TOKEN_SECRET)
+            me.screen_name = screen_name
+
+        def __call__(me, c, max_id=None):
+            if max_id:
+                response = me.client.api.statuses.user_timeline.get(screen_name=me.screen_name
+                                                                   ,count=c
+                                                                   ,max_id=me.last_id-1)
+            else:
+                response = me.client.api.statuses.user_timeline.get(screen_name=me.screen_name
+                                                                   ,count=c)
+            return response.data
+
+
+    counter = 0
+    while counter < count:
+        try:
+            s = Stream(screen_name)
+            if counter - count > 200:
+                c = 200
+            else:
+                c = counter - count
+            for tweet in s(c, ):
+                if counter == count:
+                    break
+                counter = counter + 1
+                yield tweet
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt
+        except:
+            pass
+
+
 
     # https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline.html
     while True:
@@ -102,7 +216,7 @@ def get_user_timeline(screen_name='MiroslavVitkov', count=200):
             break
 
     return response.data
-
+"""
 
 class Opts:
     DEFAULT=0
@@ -113,6 +227,7 @@ class Opts:
         me.output='./corpus'
 
         if type == me.DEFAULT:
+            me.max_tweets = 200
             me.is_en = True
             me.is_known = True
             me.min_tweets = 10
@@ -120,6 +235,7 @@ class Opts:
             me.is_verified = True
 
         elif type == me.EMPTY:
+            me.max_tweets = 0
             me.is_en = False
             me.is_known = False
             me.min_tweets = 0
@@ -152,8 +268,7 @@ def collect_users(opts):
             return False
 
     def min_tweets(user, min=10):
-        tweets = get_user_timeline(user.screen_name, count=min)
-        return len(tweets) >= min
+        return user.statuses_count >= min
 
     def starts_with(user):
         """Try to exclude people, posing as the opposite gender."""
@@ -205,5 +320,9 @@ def collect_corpus(opts):
 
 
 if __name__ == '__main__':
-    opts = Opts(Opts.DEFAULT)
-    collect_corpus(opts)
+    timeline = UserTimeline('gabberetta')
+    for tweet in timeline:
+        print(tweet.text, '\n')
+
+#    opts = Opts(Opts.DEFAULT)
+#    collect_corpus(opts)
