@@ -128,6 +128,7 @@ class UserTimeline:
         me.screen_name = screen_name
         me.queue = Queue()
         me.client = client
+        # https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline.html
         me.request = me.client.api.statuses.user_timeline.get
 
         response = me.request(screen_name=me.screen_name
@@ -161,62 +162,6 @@ class UserTimeline:
         for tweet in response.data:
             me.queue.push_left(tweet)
 
-
-    """
-    def get_user_timeline(screen_name, count=200):
-
-    Reads up to 3200 tweets per user.
-    class Stream:
-        def __init__(me, screen_name):
-            me.client = UserClient(CONSUMER_KEY
-                                  , CONSUMER_SECRET
-                                  , ACCESS_TOKEN
-                                  , ACCESS_TOKEN_SECRET)
-            me.screen_name = screen_name
-
-        def __call__(me, c, max_id=None):
-            if max_id:
-                response = me.client.api.statuses.user_timeline.get(screen_name=me.screen_name
-                                                                   ,count=c
-                                                                   ,max_id=me.last_id-1)
-            else:
-                response = me.client.api.statuses.user_timeline.get(screen_name=me.screen_name
-                                                                   ,count=c)
-            return response.data
-
-
-    counter = 0
-    while counter < count:
-        try:
-            s = Stream(screen_name)
-            if counter - count > 200:
-                c = 200
-            else:
-                c = counter - count
-            for tweet in s(c, ):
-                if counter == count:
-                    break
-                counter = counter + 1
-                yield tweet
-        except KeyboardInterrupt:
-            raise KeyboardInterrupt
-        except:
-            pass
-
-
-
-    # https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-user_timeline.html
-    while True:
-        response = None
-        try:
-            response = client.api.statuses.user_timeline.get(screen_name=screen_name, count=count)
-        except BirdyException:
-            print('Temporary connection problems.')
-        if response is not None:
-            break
-
-    return response.data
-"""
 
 class Opts:
     DEFAULT=0
@@ -308,9 +253,10 @@ def collect_corpus(opts):
 
             f.write('user = ' + user.name + ',\n')
 
-            timeline = get_user_timeline(user.screen_name)
             count = 0
-            for tweet in timeline:
+            for tweet in UserTimeline(user.screen_name):
+                if count == opts.max_tweets:
+                    break
                 f.write('text = ' + tweet.text + ',\n')
                 count = count + 1
 
@@ -320,9 +266,5 @@ def collect_corpus(opts):
 
 
 if __name__ == '__main__':
-    timeline = UserTimeline('gabberetta')
-    for tweet in timeline:
-        print(tweet.text, '\n')
-
-#    opts = Opts(Opts.DEFAULT)
-#    collect_corpus(opts)
+    opts = Opts(Opts.DEFAULT)
+    collect_corpus(opts)

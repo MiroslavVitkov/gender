@@ -51,13 +51,13 @@ if __name__ == '__main__':
         elif opt in ("-o", "--output"):
             temp.output = arg
         elif opt in ("-w", "--max-tweets"):
-            temp.max_tweets = arg
+            temp.max_tweets = int(arg)
         elif opt in ("-e", "--is-en"):
             temp.is_en = True
         elif opt in ("-k", "--is-known"):
             temp.is_known = True
         elif opt in ("-t", "--min-tweets"):
-            temp.min_tweets = arg
+            temp.min_tweets = int(arg)
         elif opt in ("-s", "--starts-with"):
             temp.starts_with = True
         elif opt in ("-v", "--is-verified"):
