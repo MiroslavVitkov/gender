@@ -19,6 +19,41 @@ ACCESS_TOKEN = '1085578386368536576-hi7jWx1vnsZfRUkUmZEXgnSuruyDgM'
 ACCESS_TOKEN_SECRET = 'UvzxhF32XpUAEeqbLkpU99xAjk8nn6iVVmlTXZytFeD6i'
 
 
+def assign_label(name, male, female):
+    if name in male:
+        return 'm'
+    if name in female:
+        return 'f'
+    return None
+
+
+class User:
+    def __init__(me, name):
+        me.name = name
+        me.tweets = []
+
+
+def read_corpus(fname='corpus'):
+    USER = 'user = '
+    TEXT = 'text = '
+    ret = []
+    with open(fname, mode='r') as f:
+        for l in f:
+            l = l.rstrip('\n')
+            l = l.rstrip(',')
+
+            if l.startswith(USER):
+                u = User(l[len(USER):])
+                ret.append(u)
+            elif l.startswith(TEXT):
+                t = l[len(TEXT):]
+                ret[-1].tweets.append(t)
+            else:
+                last = ret[-1].tweets[-1]
+                last = last + '\n' + l
+    return ret
+
+
 def read_names(male='./male', female='./female'):
     """Read in a list male names and a list of female names."""
     def to_list(fname):
