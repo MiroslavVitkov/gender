@@ -21,9 +21,11 @@ ACCESS_TOKEN_SECRET = 'UvzxhF32XpUAEeqbLkpU99xAjk8nn6iVVmlTXZytFeD6i'
 
 def assign_label(name, male, female):
     if name in male:
-        return 'm'
+#        return 'm'
+        return 0
     if name in female:
-        return 'f'
+#        return 'f'
+        return 1
     return None
 
 
